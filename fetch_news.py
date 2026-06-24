@@ -64,13 +64,18 @@ def evaluate_articles_with_claude(articles):
         "https://api.anthropic.com/v1/messages",
         headers=headers,
         json={
-            "model": "claude-opus-4-6",
+            "model": "claude-sonnet-4-6",
             "max_tokens": 500,
             "messages": [{"role": "user", "content": prompt}]
         }
     )
     
     result = response.json()
+
+    if response.status_code != 200 or 'error' in result:
+        error_info = result.get('error', result)
+        raise RuntimeError(f"Claude API error: {error_info}")
+
     return result['content'][0]['text']
 
 def create_html(articles, claude_result):
