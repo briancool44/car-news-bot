@@ -10,18 +10,35 @@ CLAUDE_API_KEY = os.environ.get('CLAUDE_API_KEY')
 NEWS_API_URL = "https://newsapi.org/v2/everything"
 
 def get_news():
-    """News APIからニュースを取得"""
-    params = {
-        'q': '中古車',  # 検索キーワード
-        'language': 'ja',  # 日本語
-        'sortBy': 'publishedAt',  # 新しい順
-        'pageSize': 50,  # 50個取得
-        'apiKey': NEWS_API_KEY
-    }
-    
-    response = requests.get(NEWS_API_URL, params=params)
-    articles = response.json().get('articles', [])
-    return articles
+    """News APIからニュースを取得（日本語＋英語で並行検索）"""
+    all_articles = []
+
+    queries = [
+        {'q': '中古車', 'language': 'ja'},
+        {'q': 'used car Japan auction', 'language': 'en'},
+        {'q': 'Japan used car market', 'language': 'en'},
+    ]
+
+    for q in queries:
+        params = {
+            **q,
+            'sortBy': 'publishedAt',
+            'pageSize': 20,
+            'apiKey': NEWS_API_KEY
+        }
+        response = requests.get(NEWS_API_URL, params=params)
+        articles = response.json().get('articles', [])
+        all_articles.extend(articles)
+
+    # URLで重複除去
+    seen = set()
+    unique = []
+    for a in all_articles:
+        if a['url'] not in seen:
+            seen.add(a['url'])
+            unique.append(a)
+
+    return unique
 
 def evaluate_articles_with_claude(articles):
     """Claudeに記事を評価してもらう"""
