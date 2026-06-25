@@ -190,9 +190,48 @@ def save_and_commit(html_content):
     # ファイル保存
     with open(filepath, 'w', encoding='utf-8') as f:
         f.write(html_content)
-    
+
     print(f"✅ ファイル保存: {filepath}")
-    
+
+    # index.html を更新
+    news_files = sorted(
+        [f for f in os.listdir('news') if f.startswith('news_') and f.endswith('.html')],
+        reverse=True
+    )
+    index_html = """<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中古車ニュース一覧</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+        h1 { color: #333; border-bottom: 3px solid #007bff; padding-bottom: 10px; }
+        ul { list-style: none; padding: 0; }
+        li { background: white; margin: 10px 0; padding: 15px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        a { color: #007bff; text-decoration: none; font-size: 1.1em; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <h1>📰 中古車ニュース一覧</h1>
+    <ul>
+"""
+    for f in news_files:
+        date_str = f.replace('news_', '').replace('.html', '')
+        try:
+            dt = datetime.strptime(date_str, '%Y%m%d_%H%M%S')
+            label = dt.strftime('%Y年%m月%d日 %H:%M')
+        except:
+            label = date_str
+        index_html += f'        <li><a href="{f}">{label} のニュース</a></li>\n'
+    index_html += """    </ul>
+</body>
+</html>"""
+    with open('news/index.html', 'w', encoding='utf-8') as f:
+        f.write(index_html)
+    print("✅ index.html 更新")
+
     # Githubにコミット
     os.system(f'git config user.email "bot@example.com"')
     os.system(f'git config user.name "news-bot"')
